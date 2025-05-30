@@ -14,7 +14,9 @@ const GeneratePage = () => {
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [warning, setWarning] = useState('');
   const [generatedImage, setGeneratedImage] = useState(null);
+  const [enhancedPrompt, setEnhancedPrompt] = useState('');
   const [mode, setMode] = useState('text'); // text, image, edit
   
   // Check if user is logged in
@@ -33,10 +35,22 @@ const GeneratePage = () => {
     
     setLoading(true);
     setError('');
+    setWarning('');
+    setEnhancedPrompt('');
     
     try {
       const newImage = await generateImage(prompt);
       setGeneratedImage(newImage);
+      
+      // Сохраняем улучшенный промт если он есть
+      if (newImage.enhancedPrompt) {
+        setEnhancedPrompt(newImage.enhancedPrompt);
+      }
+      
+      // Отображаем предупреждение, если использовался fallback
+      if (newImage.isFallback) {
+        setWarning('Отображается заглушка вместо сгенерированного изображения. API ключ не настроен или произошла ошибка соединения с сервером Stability AI.');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Ошибка генерации изображения. Пожалуйста, попробуйте позже.');
     } finally {
@@ -48,6 +62,7 @@ const GeneratePage = () => {
     setGeneratedImage(null);
     setPrompt('');
     setError('');
+    setWarning('');
     promptInputRef.current?.focus();
   };
 
@@ -151,6 +166,20 @@ const GeneratePage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span>{error}</span>
+                </motion.div>
+              )}
+
+              {warning && (
+                <motion.div
+                  className="mb-5 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/30 text-yellow-700 dark:text-yellow-500 rounded-xl p-3 flex items-start gap-3"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                >
+                  <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>{warning}</span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -294,6 +323,11 @@ const GeneratePage = () => {
                     alt={generatedImage.prompt}
                     className="w-full h-auto object-contain shadow-lg rounded-xl"
                   />
+                  {generatedImage.isFallback && (
+                    <div className="absolute top-0 right-0 bg-yellow-500 text-white text-xs px-2 py-1 m-2 rounded-lg opacity-70">
+                      Заглушка
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
                     <div className="text-white text-sm mb-1 line-clamp-2">{generatedImage.prompt}</div>
                     <div className="flex justify-between">
@@ -315,6 +349,13 @@ const GeneratePage = () => {
                     </div>
                   </div>
                 </div>
+
+                {enhancedPrompt && (
+                  <div className="mb-4 p-3 bg-sora-blue-50 dark:bg-sora-blue-900/20 border border-sora-blue-200 dark:border-sora-blue-800/30 rounded-xl text-xs">
+                    <div className="font-medium mb-1 text-sora-blue-700 dark:text-sora-blue-300">Улучшенный запрос:</div>
+                    <div className="text-sora-gray-600 dark:text-sora-gray-300">{enhancedPrompt}</div>
+                  </div>
+                )}
 
                 <div className="flex justify-between items-center gap-3 mt-auto">
                   <button

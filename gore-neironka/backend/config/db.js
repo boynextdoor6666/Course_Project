@@ -5,12 +5,21 @@ dotenv.config();
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    // Проверяем наличие строки подключения
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      console.warn('MongoDB URI not found in environment variables');
+      console.warn('Using fallback in-memory database functionality');
+      // Не выбрасываем ошибку, чтобы приложение продолжало работать с мок-данными
+      return;
+    }
+
+    const conn = await mongoose.connect(mongoUri);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error(`MongoDB Connection Error: ${error.message}`);
-    console.log('Warning: Application will run with limited functionality without MongoDB');
-    // Не завершаем процесс, чтобы приложение запустилось даже без базы данных
+    console.error(`Error connecting to MongoDB: ${error.message}`);
+    // Не выбрасываем ошибку дальше, чтобы приложение не упало
+    // Приложение будет использовать мок-данные вместо реальной БД
   }
 };
 
