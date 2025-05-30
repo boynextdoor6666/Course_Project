@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+// Используем относительный путь для работы с прокси Vite
+const API_URL = '/api';
 
 // Create axios instance
 const api = axios.create({
